@@ -7,16 +7,19 @@
 char lexbuff[BSIZE];
 int  lineno = 1;
 int  tokenval = NONE;
+int  inComment = 0;
 
 int lexan() 
 {
     int t;
     while(1){
         t = getchar();
-        if(t==' ' || t=='\t') { // Ignore whitespace
-            ;
-        } else if(t=='\n') { // Count lines
+        if(t=='\n') { // Count lines
             lineno++;
+            // After a new line we are no longer in comment
+            inComment = 0;
+        } else if(t==' ' || t=='\t' || inComment) { // Ignore whitespace or comments
+            ;
         } else if(isdigit(t)){ // Number
             ungetc(t, stdin);
             scanf("%d", &tokenval);
@@ -59,7 +62,14 @@ int lexan()
         } else if (ispunct(t)) {
             switch(t){
                 case '/':
-                    return DIV;
+                    t = getchar();
+                    if(t == '/') {
+                        inComment = 1;
+                        break;
+                    } else {
+                        ungetc(t, stdin);
+                        return DIV;
+                    }
                 case '%':
                     return MOD;
                 case '-':
@@ -67,6 +77,11 @@ int lexan()
                 case '+':
                     return PLUS;
                 case '=':
+                    t = getchar();
+                    if(t != '=') {
+                        ungetc(t, stdin);
+                        return ASSIGN;
+                    }
                     return EQUAL;
                 case '*':
                     return TIMES;
@@ -80,13 +95,6 @@ int lexan()
                     return LPAREN;
                 case ')':
                     return RPAREN;
-                case ':':    
-                    t = getchar();
-                    if(t != '=') {
-                        ungetc(t, stdin);
-                        error("syntax error: expected :=");
-                    }
-                    return ASSIGN;
             }
         } else {
             error("syntax error: unexpected token");

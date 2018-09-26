@@ -10,7 +10,7 @@ int lookahead;
 void parse(){
     lookahead = lexan();
     if(debug){
-        printf("->%s\n", token_to_name(lookahead));
+        fprintf(stderr, "->%s\n", token_to_name(lookahead));
     }
     while(lookahead != DONE) {
         stmt_list();
@@ -79,12 +79,10 @@ void stmt(){
 }
 
 void stmt_list(){
-    stmt();
-    fprintf(stderr, "NEXT STATEMENT\n");
-    while(lookahead != DONE){
-        stmt(); 
+    // Way to exist a stmt_list is end of file or end of block
+    while(lookahead != DONE && lookahead != END){
+        stmt();
         match(SEMIC);
-        fprintf(stderr, "NEXT STATEMENT\n");
     }
 }
 
@@ -150,7 +148,7 @@ void match(int t)
     if(lookahead == t) {
         lookahead = lexan();
         if(debug){
-            printf("->%s\n", token_to_name(lookahead));
+            fprintf(stderr, "->%s\n", token_to_name(lookahead));
         }
     } else {
         syntaxError("match", token_to_name(t),token_to_name(lookahead));

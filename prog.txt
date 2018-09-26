@@ -1,3 +1,4 @@
+// A
 i:=5;
 while i do
 {

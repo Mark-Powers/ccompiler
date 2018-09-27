@@ -21,10 +21,9 @@ void stmt(){
     char* lbl;
     switch(lookahead) {
         case BEGIN: // Code Block
-            match(BEGIN);
-            stmt_list();
-            match(END);
-            break;
+            block();
+          // Return so that we don't need a semicolon
+            return;
         case ID: // Assignment
             emit(IDLEFT, tokenval);
             match(ID);
@@ -48,9 +47,9 @@ void stmt(){
             }
             emit(GOFALSE, p);
             match(THEN);
-            stmt();
+            block();
             emit(LABEL, p);
-            break;
+            return;
         case WHILE: // While loop
             match(WHILE);
             lbl = nextLabel();
@@ -69,20 +68,32 @@ void stmt(){
             }
             match(DO);
             emit(GOFALSE, p2);
-            stmt();
+            block();
             emit(GOTO, p1);
             emit(LABEL, p2);
-            break;
+            return;
         default:
             syntaxError("", "statement", token_to_name(lookahead));
-    } 
+    }
+
+    match(SEMIC);
+}
+
+void block(){
+    if(lookahead == BEGIN){
+        match(BEGIN);
+        stmt_list();
+        match(END);
+    } else {
+        stmt();
+    }
 }
 
 void stmt_list(){
     // Way to exist a stmt_list is end of file or end of block
     while(lookahead != DONE && lookahead != END){
+//        block();
         stmt();
-        match(SEMIC);
     }
 }
 
@@ -91,7 +102,11 @@ void expr()
     int t;
     term();
     while(1) {
-        if(lookahead==PLUS || lookahead==MINUS){
+        if(lookahead==EQUAL){
+            match(EQUAL);
+            expr();
+            emit(EQUAL, NONE);
+        } else if(lookahead==PLUS || lookahead==MINUS){
             t = lookahead;
             match(lookahead);
             term();

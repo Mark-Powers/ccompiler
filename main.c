@@ -5,12 +5,13 @@
 
 int main(int argc, char **argv)
 {
-    if(argc > 1){
-        debug = 1;
-    } else {
-        debug = 0;
+    debug = 0;
+    int i;
+    for(i = 1; i < argc; i++){
+        if(argv[i][0] == '-' && argv[i][1]=='d'){
+            debug = 1;
+        }
     }
-
     init();
     parse();
     exit(0);

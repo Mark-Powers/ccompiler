@@ -45,6 +45,10 @@ void emit(int t, int tval)
        case GOTO:
             printf("goto %s\n", symtable[tval].lexptr);
             break;
+        case EQUAL:
+            // Subtract top two items
+            printf("-\nnot\n");
+            break;
         case PRINT:
             printf("print\n");
             break;

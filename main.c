@@ -6,10 +6,12 @@
 int main(int argc, char **argv)
 {
     debug = 0;
-    int i;
-    for(i = 1; i < argc; i++){
-        if(argv[i][0] == '-' && argv[i][1]=='d'){
-            debug = 1;
+    char *s;
+    while(--argc > 0 && (*++argv)[0] == '-'){
+        for(s = argv[0]+1; *s != '\0'; s++){
+            if(*s == 'd'){
+                debug = 1;
+            }
         }
     }
     init();

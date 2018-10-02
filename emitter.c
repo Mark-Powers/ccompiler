@@ -2,12 +2,15 @@
 #include "emitter.h"
 #include "lexer.h"
 
+#include <string.h>
+
 int counter = 0;
 char label[10];
 
 void emit(int t, int tval)
 {
     //printf("token %s, tokenval %d\n", token_to_name(t), tval);
+    int i;
     switch(t) {
         case PLUS:
             printf("+\n");
@@ -51,6 +54,16 @@ void emit(int t, int tval)
             break;
         case PRINT:
             printf("print\n");
+            break;
+        case STRING:
+            i = strlen(symtable[tval].lexptr);
+            do {
+                printf("push %d\n", symtable[tval].lexptr[i]);
+                i--;
+            } while (i >= 0);
+            break;
+        case PRINTSTR:
+            printf("printstr\n");
             break;
         default:
             printf("token %s, tokenval %d\n", token_to_name(t), tval);

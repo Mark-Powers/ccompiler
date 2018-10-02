@@ -60,6 +60,7 @@ int lexan()
         } else if (t == EOF) {
             return DONE;
         } else if (ispunct(t)) {
+            int p, b = 0;
             switch(t){
                 case '/':
                     t = getchar();
@@ -95,6 +96,23 @@ int lexan()
                     return LPAREN;
                 case ')':
                     return RPAREN;
+                case '"':
+                    t = getchar();
+                    while (t != '"') {
+                        lexbuff[b] = t;
+                        t = getchar();
+                        b++;
+                        if(b >= BSIZE){
+                            error("compiler error");
+                        }
+                    }
+                    lexbuff[b] = EOS;
+                    p = lookup(lexbuff);
+                    if (p == 0){
+                        p = insert(lexbuff, STRING);
+                    }
+                    tokenval = p;
+                    return STRING;
             }
         } else {
             error("syntax error: unexpected token");

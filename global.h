@@ -30,6 +30,8 @@
 #define GOTO    277
 #define LABEL   278
 #define GOFALSE 279
+#define PRINTSTR 280
+#define STRING  281
 
 int tokenval;
 int lineno;

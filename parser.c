@@ -33,8 +33,14 @@ void stmt(){
             break;
         case PRINT: // Output
             match(PRINT);
-            expr();
-            emit(PRINT, NONE);
+            if(lookahead == STRING){
+                match(STRING);
+                emit(STRING, tokenval);
+                emit(PRINTSTR, NONE);
+            } else {
+                expr();
+                emit(PRINT, NONE);
+            }
             break;
         case IF: // If statement
             match(IF);
@@ -154,7 +160,7 @@ void factor()
             break;
         default:
             printf("%s\n", token_to_name(lookahead));
-            error("syntax error: factor");
+            syntaxError("factor", "factor", token_to_name(lookahead));
     } 
 }
 

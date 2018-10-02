@@ -1,19 +1,84 @@
 #include "global.h"
 #include "error.h"
 #include "symbol.h"
+#include "lexer.h"
 
 #include <string.h>
+#include <stdlib.h>
+
+#define ISIZE 20
+
+char inputbuff[ISIZE];
+int  i_index;
 
 char lexbuff[BSIZE];
 int  lineno = 1;
 int  tokenval = NONE;
 int  inComment = 0;
 
+
+
+void fill(int front){
+    int i;
+    if(front){
+        for(i = 0; i < ISIZE/2-1; i++) {
+            inputbuff[i] = fgetc(file);
+        }
+    } else {
+        for(i = 0; i < ISIZE/2-1; i++) {
+            inputbuff[ISIZE/2 + i] = fgetc(file);
+        }
+    }
+}
+
+void setupbuff() {
+    i_index = -1; 
+    
+    inputbuff[ISIZE/2-1] = EOF; 
+    inputbuff[ISIZE-1] = EOF;
+    fill(1);
+}
+
+char nextchar() {
+    i_index++;
+    if(inputbuff[i_index] == EOF){
+        int i;
+        if(i_index == ISIZE/2-1){
+            fill(0); 
+            i_index++;
+        } else if(i_index == ISIZE-1) { 
+            fill(1);
+            i_index = 0; 
+        }
+        // Else EOF, so return it anyway
+    }
+
+    /* 
+    int j;
+    for(j = 0; j < ISIZE; j++) {
+        printf("%d ", inputbuff[j]);
+    }
+    printf("\n");
+    */
+    return inputbuff[i_index];
+}
+
+void ungetchar(char c) {
+    inputbuff[i_index] = c;
+    i_index--;
+    if(i_index == ISIZE/2-1){
+        i_index--;
+    } else if(i_index == -1) { 
+        i_index = ISIZE-1; 
+    }
+//    ungetc(c, file);
+}
+
 int lexan() 
 {
     int t;
     while(1){
-        t = getchar();
+        t = nextchar();
         if(t=='\n') { // Count lines
             lineno++;
             // After a new line we are no longer in comment
@@ -21,14 +86,11 @@ int lexan()
         } else if(t==' ' || t=='\t' || inComment) { // Ignore whitespace or comments
             ;
         } else if(isdigit(t)){ // Number
-            ungetc(t, stdin);
-            scanf("%d", &tokenval);
-            return NUM;
-        } else if(isalpha(t)) { // Word or identifier
-            int p, b = 0;
-            while (isalnum(t)) {
+            //ungetchar(t);
+            int b = 0;  
+            while(isdigit(t)){
                 lexbuff[b] = t;
-                t = getchar();
+                t = nextchar();
                 b++;
                 if(b >= BSIZE){
                     error("compiler error");
@@ -36,7 +98,24 @@ int lexan()
             }
             lexbuff[b] = EOS;
             if (t != EOF) {
-                ungetc(t, stdin);
+                ungetchar(t);
+            }
+            tokenval = atoi(lexbuff);
+            //fscanf(file, "%d", &tokenval);
+            return NUM;
+        } else if(isalpha(t)) { // Word or identifier
+            int p, b = 0;
+            while (isalnum(t)) {
+                lexbuff[b] = t;
+                t = nextchar();
+                b++;
+                if(b >= BSIZE){
+                    error("compiler error");
+                }
+            }
+            lexbuff[b] = EOS;
+            if (t != EOF) {
+                ungetchar(t);
             }
             // Checks for reserved word
             if(strcmp(lexbuff, "if") == 0){
@@ -58,17 +137,18 @@ int lexan()
             tokenval = p;
             return symtable[p].token;
         } else if (t == EOF) {
+            fclose(file);
             return DONE;
         } else if (ispunct(t)) {
             int p, b = 0;
             switch(t){
                 case '/':
-                    t = getchar();
+                    t = nextchar();
                     if(t == '/') {
                         inComment = 1;
                         break;
                     } else {
-                        ungetc(t, stdin);
+                        ungetchar(t);
                         return DIV;
                     }
                 case '%':
@@ -78,9 +158,9 @@ int lexan()
                 case '+':
                     return PLUS;
                 case '=':
-                    t = getchar();
+                    t = nextchar();
                     if(t != '=') {
-                        ungetc(t, stdin);
+                        ungetchar(t);
                         return ASSIGN;
                     }
                     return EQUAL;
@@ -97,10 +177,10 @@ int lexan()
                 case ')':
                     return RPAREN;
                 case '"':
-                    t = getchar();
+                    t = nextchar();
                     while (t != '"') {
                         lexbuff[b] = t;
-                        t = getchar();
+                        t = nextchar();
                         b++;
                         if(b >= BSIZE){
                             error("compiler error");
@@ -115,7 +195,8 @@ int lexan()
                     return STRING;
             }
         } else {
-            error("syntax error: unexpected token");
+            printf("%d\n", t);
+            error("lexer");
             //tokenval = NONE
             //return t;
         }
@@ -123,6 +204,7 @@ int lexan()
 }
 
 char* token_to_name(int tok){
+    char* str = malloc(4);
     switch(tok){
         case 256:
             return "NUM";
@@ -166,5 +248,10 @@ char* token_to_name(int tok){
             return "IDLEFT";
         case 276:
             return "PRINT";
+        case 281:
+            return "STRING";
+        default:
+            sprintf(str, "%d", tok);
+            return str;
     }
 }

@@ -1,5 +1,6 @@
 #include "global.h"
 #include "symbol.h"
+#include "lexer.h"
 
 struct entry keywords[] = {
     "mod", MOD,
@@ -17,4 +18,6 @@ void init()
     for(p = keywords; p->token; p++){
         insert(p->lexptr, p->token);
     }
+
+    setupbuff();
 }

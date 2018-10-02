@@ -1,3 +1,6 @@
+#ifndef GLOBAL_H
+#define GLOBAL_H
+
 #include <stdio.h>
 #include <ctype.h>
 
@@ -36,6 +39,7 @@
 int tokenval;
 int lineno;
 int debug;
+FILE *file;
 
 struct entry {
     char *lexptr;
@@ -43,4 +47,6 @@ struct entry {
 };
 
 struct entry symtable[SYMMAX];
+
+#endif // GLOBAL_H
 

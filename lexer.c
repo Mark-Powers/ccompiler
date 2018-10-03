@@ -6,10 +6,12 @@
 #include <string.h>
 #include <stdlib.h>
 
-#define ISIZE 20
+#define ISIZE 10
 
 char inputbuff[ISIZE];
 int  i_index;
+int  max_index; // Max index read into file
+int  real_index; // Real i_index (no looping)
 
 char lexbuff[BSIZE];
 int  lineno = 1;
@@ -28,48 +30,71 @@ void fill(int front){
             inputbuff[ISIZE/2 + i] = fgetc(file);
         }
     }
+    max_index += ISIZE/2-1;
 }
 
 void setupbuff() {
     i_index = -1; 
+    real_index = 0;
+    max_index = 0;
     
     inputbuff[ISIZE/2-1] = EOF; 
     inputbuff[ISIZE-1] = EOF;
     fill(1);
+
+        int j;
+        for(j = 0; j < ISIZE; j++) {
+            printf("%d ", inputbuff[j]);
+        }
+        printf("\n");
 }
 
 char nextchar() {
     i_index++;
+    int changed = 0;
     if(inputbuff[i_index] == EOF){
+        changed = 1;
         int i;
-        if(i_index == ISIZE/2-1){
-            fill(0); 
+        if(i_index == ISIZE/2-1) {
+            if(real_index == max_index){
+                fill(0); 
+            }
             i_index++;
         } else if(i_index == ISIZE-1) { 
-            fill(1);
+            if(real_index == max_index){
+                fill(1); 
+            }
             i_index = 0; 
         }
         // Else EOF, so return it anyway
     }
 
-    /* 
-    int j;
-    for(j = 0; j < ISIZE; j++) {
-        printf("%d ", inputbuff[j]);
+    if(debug && changed){ 
+        int j;
+        for(j = 0; j < ISIZE; j++) {
+            fprintf(stderr, "%d ", inputbuff[j]);
+        }
+        fprintf(stderr, "\n");
     }
-    printf("\n");
-    */
+    printf("\t%d\n", inputbuff[i_index]); 
+
+    real_index++;
     return inputbuff[i_index];
 }
 
 void ungetchar(char c) {
+    printf("ungetting...\n");
     inputbuff[i_index] = c;
     i_index--;
+    real_index--;
     if(i_index == ISIZE/2-1){
-        i_index--;
+        i_index-=1;
+        printf("\t\t%d\n", i_index);
     } else if(i_index == -1) { 
-        i_index = ISIZE-1; 
+        i_index = ISIZE-2; 
     }
+    // We shouldn't need to ungetc, because hopefully
+    // our buffer is larger than the max lookahead needed
 //    ungetc(c, file);
 }
 
@@ -201,7 +226,7 @@ int lexan()
                     return STRING;
             }
         } else {
-            printf("%d\n", t);
+            printf("Unknown character: %d\n", t);
             error("lexer");
             //tokenval = NONE
             //return t;

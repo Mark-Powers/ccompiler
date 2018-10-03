@@ -5,7 +5,7 @@
 void error(char* m)
 {
     fprintf(stderr, "line %d: %s\n", lineno, m);
-//    exit(1);
+    exit(1);
 }
 
 void syntaxError(char* message, char* expected, char* actual)

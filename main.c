@@ -1,28 +1,49 @@
 #include <stdlib.h>
+#include <getopt.h>
+
 #include "global.h"
 #include "init.h"
 #include "parser.h"
 
 int main(int argc, char **argv)
 {
-    file = 0;
+    file = stdin;
+    out = stdout;
     debug = 0;
-    char *s;
-    while(--argc > 0){
-        if( (*++argv)[0] == '-' ){
-            for(s = argv[0]+1; *s != '\0'; s++){
-                if(*s == 'd'){
-                    debug = 1;
-                }
-            }
-        } else {
-            fprintf(stderr, "Compiling '%s'\n", argv[0]);
-            file = fopen(argv[0], "r");
+
+    static struct option long_options[] = 
+    {
+        {"debug", no_argument, NULL, 'd'},
+        {"out", required_argument, NULL, 'o'},
+//        {"o", required_argument, NULL, 'o'},
+        {0, 0, 0, 0}
+    };
+    int c;
+    int option_index = 0;
+    while((c = getopt_long(argc, argv, "do:", long_options, &option_index)) != -1) {
+        switch(c) 
+        {
+            case 'd':
+                debug = 1;
+                break;
+            case 'o':
+                fprintf(stderr, "Outputting '%s'\n", optarg);
+                out = fopen(optarg, "w");
+                break;
         }
     }
-    if(!file){
-
-        file = stdin;
+    while(optind < argc){
+        fprintf(stderr, "Compiling '%s'\n", argv[optind]);
+        file = fopen(argv[optind++], "r");
+        break;
+    }
+    if(file == NULL){
+        fprintf(stderr, "Cannot read from input file!\n");
+        exit(1);
+    }
+    if(out == NULL){
+        fprintf(stderr, "Cannot write to output file!\n");
+        exit(1);
     }
     init();
     parse();

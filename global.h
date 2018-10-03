@@ -40,6 +40,7 @@ int tokenval;
 int lineno;
 int debug;
 FILE *file;
+FILE *out;
 
 struct entry {
     char *lexptr;

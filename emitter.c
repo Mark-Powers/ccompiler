@@ -9,64 +9,63 @@ char label[10];
 
 void emit(int t, int tval)
 {
-    //printf("token %s, tokenval %d\n", token_to_name(t), tval);
     int i;
     switch(t) {
         case PLUS:
-            printf("+\n");
+            fprintf(out, "+\n");
             break;
         case MINUS:
-            printf("-\n");
+            fprintf(out, "-\n");
             break;
         case TIMES:
-            printf("*\n");
+            fprintf(out, "*\n");
             break;
         case DIV:
-            printf("/\n");
+            fprintf(out, "/\n");
             break;
         case MOD:
-            printf("%%\n");
+            fprintf(out, "%%\n");
             break;
         case NUM:
-            printf("push %d\n", tval);
+            fprintf(out, "push %d\n", tval);
             break;
         case ID:
-            printf("rvalue %s\n", symtable[tval].lexptr);
+            fprintf(out, "rvalue %s\n", symtable[tval].lexptr);
             break;
         case ASSIGN:
-            printf(":=\n");
+            fprintf(out, ":=\n");
             break;
         case IDLEFT:
-            printf("lvalue %s\n", symtable[tval].lexptr);
+            fprintf(out, "lvalue %s\n", symtable[tval].lexptr);
             break;
         case GOFALSE:
-            printf("gofalse %s\n", symtable[tval].lexptr);
+            fprintf(out, "gofalse %s\n", symtable[tval].lexptr);
             break;
         case LABEL:
-            printf("label %s\n", symtable[tval].lexptr);
+            fprintf(out, "label %s\n", symtable[tval].lexptr);
             break;
        case GOTO:
-            printf("goto %s\n", symtable[tval].lexptr);
+            fprintf(out, "goto %s\n", symtable[tval].lexptr);
             break;
         case EQUAL:
             // Subtract top two items
-            printf("-\nnot\n");
+            fprintf(out, "-\nnot\n");
             break;
         case PRINT:
-            printf("print\n");
+            fprintf(out, "print\n");
             break;
         case STRING:
             i = strlen(symtable[tval].lexptr);
             do {
-                printf("push %d\n", symtable[tval].lexptr[i]);
+                fprintf(out, "push %d\n", symtable[tval].lexptr[i]);
                 i--;
             } while (i >= 0);
             break;
         case PRINTSTR:
-            printf("printstr\n");
+            fprintf(out, "printstr\n");
             break;
         default:
-            printf("token %s, tokenval %d\n", token_to_name(t), tval);
+            fprintf(out, "token %s, tokenval %d\n", token_to_name(t), tval);
     }
 }
 

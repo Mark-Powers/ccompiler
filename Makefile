@@ -1,4 +1,4 @@
-compiler: lexer.o symbol.o init.o parser.o emitter.o error.o main.o
+compiler: io.o lexer.o symbol.o init.o parser.o emitter.o error.o main.o 
 	gcc -g -o compiler *.o
 
 main.o: main.c
@@ -21,6 +21,9 @@ emitter.o: emitter.c
 
 error.o: error.c
 	gcc -g -c error.c
+
+io.o: io.c
+	gcc -g -c io.c
 
 clean:
 	rm -f *.o

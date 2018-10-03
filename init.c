@@ -1,7 +1,7 @@
 #include "init.h"
 #include "global.h"
-#include "symbol.h"
-#include "io.h"
+#include "util/symbol.h"
+#include "lexer/io.h"
 
 struct entry keywords[] = {
     "mod", MOD,

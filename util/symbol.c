@@ -1,5 +1,6 @@
 #include <string.h>
-#include "global.h"
+#include "symbol.h"
+#include "../global.h"
 #include "error.h"
 
 #define STRMAX 999

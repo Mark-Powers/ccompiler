@@ -1,6 +1,7 @@
 #include <stdlib.h>
-#include "global.h"
-#include "lexer.h"
+#include "error.h"
+#include "../global.h"
+#include "../lexer/lexer.h"
 
 void error(char* m)
 {

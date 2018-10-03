@@ -1,6 +1,6 @@
-#include "global.h"
-#include "error.h"
-#include "symbol.h"
+#include "../global.h"
+#include "../util/error.h"
+#include "../util/symbol.h"
 #include "lexer.h"
 #include "io.h"
 

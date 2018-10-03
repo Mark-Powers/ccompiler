@@ -1,11 +1,11 @@
 #include <setjmp.h>
 
-#include "global.h"
+#include "../global.h"
 #include "parser.h"
-#include "lexer.h"
-#include "emitter.h"
-#include "error.h"
-#include "symbol.h"
+#include "../lexer/lexer.h"
+#include "../generator/emitter.h"
+#include "../util/error.h"
+#include "../util/symbol.h"
 
 static jmp_buf buf;
 

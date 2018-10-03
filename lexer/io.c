@@ -1,5 +1,5 @@
 #include "io.h"
-#include "global.h"
+#include "../global.h"
 
 #define ISIZE 40
 

@@ -1,6 +1,6 @@
-#include "global.h"
-#include "emitter.h"
-#include "lexer.h"
+#include "../global.h"
+#include "../generator/emitter.h"
+#include "../lexer/lexer.h"
 
 #include <string.h>
 

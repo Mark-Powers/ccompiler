@@ -3,7 +3,7 @@
 
 #include "global.h"
 #include "init.h"
-#include "parser.h"
+#include "parser/parser.h"
 
 int main(int argc, char **argv)
 {

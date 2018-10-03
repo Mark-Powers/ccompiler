@@ -1,31 +1,35 @@
-compiler: io.o lexer.o symbol.o init.o parser.o emitter.o error.o main.o 
-	gcc -g -o compiler *.o
+TARGET = compiler
+CC = gcc
+CFLAGS = -g
 
-main.o: main.c
-	gcc -g -c main.c
+compiler: bin/io.o bin/lexer.o bin/symbol.o bin/init.o bin/parser.o bin/emitter.o bin/error.o bin/main.o 
+	$(CC) $(CFLAGS) -o $(TARGET) bin/*.o
 
-init.o: init.c
-	gcc -g -c init.c
+bin/main.o: main.c
+	$(CC) $(CFLAGS) -c $^ -o $@
 
-symbol.o: symbol.c
-	gcc -g -c symbol.c
+bin/init.o: init.c
+	$(CC) $(CFLAGS) -c $^ -o $@
 
-lexer.o: lexer.c
-	gcc -g -c lexer.c
+bin/symbol.o: util/symbol.c
+	$(CC) $(CFLAGS) -c $^ -o $@
 
-parser.o: parser.c
-	gcc -g -c parser.c
+bin/lexer.o: lexer/lexer.c
+	$(CC) $(CFLAGS) -c $^ -o $@
 
-emitter.o: emitter.c
-	gcc -g -c emitter.c
+bin/parser.o: parser/parser.c
+	$(CC) $(CFLAGS) -c $^ -o $@
 
-error.o: error.c
-	gcc -g -c error.c
+bin/emitter.o: generator/emitter.c
+	$(CC) $(CFLAGS) -c $^ -o $@
 
-io.o: io.c
-	gcc -g -c io.c
+bin/error.o: util/error.c
+	$(CC) $(CFLAGS) -c $^ -o $@
+
+bin/io.o: lexer/io.c
+	$(CC) $(CFLAGS) -c $^ -o $@
 
 clean:
-	rm -f *.o
+	rm -f bin/*.o
 	rm -f compiler
 

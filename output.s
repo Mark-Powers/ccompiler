@@ -1,4 +1,3 @@
-Compiling 'prog2.txt'
 push 2000
 print
 push 0

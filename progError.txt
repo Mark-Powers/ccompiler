@@ -1,0 +1,13 @@
+print "This works";
+a := 2*;
+
+print "This works";
+print "This doesn't";
+print "This would if there was a SEMIC above";
+a := 2;
+
+print "This doesn't"
+print "This would if there was a SEMIC above";
+
+print a;
+

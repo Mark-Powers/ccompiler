@@ -16,7 +16,7 @@ int main(int argc, char **argv)
                 }
             }
         } else {
-            printf("Compiling '%s'\n", argv[0]);
+            fprintf(stderr, "Compiling '%s'\n", argv[0]);
             file = fopen(argv[0], "r");
         }
     }

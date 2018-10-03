@@ -15,8 +15,7 @@ char lexbuff[BSIZE];
 int  lineno = 1;
 int  tokenval = NONE;
 int  inComment = 0;
-
-
+int  inError = 0;
 
 void fill(int front){
     int i;
@@ -85,8 +84,15 @@ int lexan()
             inComment = 0;
         } else if(t==' ' || t=='\t' || inComment) { // Ignore whitespace or comments
             ;
+        } else if(inError) {
+             while(t != ';'){
+                t = nextchar();
+                if(t=='\n') { 
+                    lineno++;
+                }
+             }
+             inError = 0;
         } else if(isdigit(t)){ // Number
-            //ungetchar(t);
             int b = 0;  
             while(isdigit(t)){
                 lexbuff[b] = t;
@@ -201,6 +207,10 @@ int lexan()
             //return t;
         }
     }
+}
+
+void skipstatement() {
+    inError = 1;
 }
 
 char* token_to_name(int tok){

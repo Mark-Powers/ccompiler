@@ -1,9 +1,13 @@
+#include <setjmp.h>
+
 #include "global.h"
 #include "parser.h"
 #include "lexer.h"
 #include "emitter.h"
 #include "error.h"
 #include "symbol.h"
+
+static jmp_buf buf;
 
 int lookahead;
 
@@ -98,8 +102,11 @@ void block(){
 void stmt_list(){
     // Way to exist a stmt_list is end of file or end of block
     while(lookahead != DONE && lookahead != END){
-//        block();
-        stmt();
+        if(!setjmp(buf)){
+            stmt();
+        } else {
+            fprintf(stderr, "Moving to next statement\n");
+        }
     }
 }
 
@@ -159,7 +166,6 @@ void factor()
             match(ID);
             break;
         default:
-            printf("%s\n", token_to_name(lookahead));
             syntaxError("factor", "factor", token_to_name(lookahead));
     } 
 }
@@ -173,6 +179,7 @@ void match(int t)
         }
     } else {
         syntaxError("match", token_to_name(t),token_to_name(lookahead));
+        longjmp(buf, 1);
     }
 }
 

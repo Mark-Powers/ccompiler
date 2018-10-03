@@ -1,6 +1,6 @@
 TARGET = compiler
 CC = gcc
-CFLAGS = -g
+CFLAGS = -g -Wall
 
 compiler: bin/io.o bin/lexer.o bin/symbol.o bin/init.o bin/parser.o bin/emitter.o bin/error.o bin/main.o 
 	$(CC) $(CFLAGS) -o $(TARGET) bin/*.o

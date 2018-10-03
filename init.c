@@ -4,13 +4,13 @@
 #include "lexer/io.h"
 
 struct entry keywords[] = {
-    "mod", MOD,
-    "if", IF,
-    "then", THEN,
-    "while", WHILE,
-    "do", DO,
-    "print", PRINT,
-    0, 0
+    {"mod", MOD},
+    {"if", IF},
+    {"then", THEN},
+    {"while", WHILE},
+    {"do", DO},
+    {"print", PRINT},
+    {0, 0}
 };
 
 void init()

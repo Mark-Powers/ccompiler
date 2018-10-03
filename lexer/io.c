@@ -34,10 +34,7 @@ void setupbuff() {
 
 char nextchar() {
     i_index++;
-    int changed = 0;
     if(inputbuff[i_index] == EOF){
-        changed = 1;
-        int i;
         if(i_index == ISIZE/2-1) {
             if(real_index == max_index){
                 fill(0); 

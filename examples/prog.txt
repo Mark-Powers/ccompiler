@@ -4,10 +4,11 @@ while i do
 {
     i:=i-1;
     print i;
+    // If i is even
+    if i % 2 == 0 then
+    {
+        print "EVEN";
+    }
 }
-if i == 0 then
-{
-    print 1000;
-}
-print 999;
+print "Done";
 

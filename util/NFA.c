@@ -1,73 +1,176 @@
 #include <stdlib.h>
+#include <stdio.h>
+#include <ctype.h>
 
 #include "NFA.h"
 
-struct NFA* NFAalloc(){
-    static int state = 0;
+static int state = -1;
+
+int nextState() {
+    return ++state;
+}
+
+struct NFA* create(){
     struct NFA *node = (struct NFA*) malloc(sizeof(struct NFA));
-    node->state = state++;
-    // A single node NFA is its own finish state
-    node->finishState = node;
-    node->edgeSize = 0;
-    node->currEdges = 0;
+    node->initState = nextState();
+    node->currFinalSize = 0;
+    node->finalSize = 0;
+    addFinalState(node, nextState());
+    node->transitionSize = 0;
+    node->currTransitionSize = 0;
+    // addTransition(node, node->initState, letter, node->finalStates[0]);
     return node;
 }
 
-void createEdge(struct NFA* n1, struct NFA* n2, char match) {
-    n1 = n1->finishState;
-    if(n1->currEdges == n1->edgeSize){
-        // Create new edge array with 2 extra spots
-        int newSize = n1->currEdges + 2;
-        struct edge **edges = (struct edge**) malloc(sizeof(struct edge) * newSize);
-        int i;
-        for(i = 0; i < n1->currEdges; i++) {
-            edges[i] = n1->edges[i];
-        }
-        n1->edges = edges;
-        n1->edgeSize = newSize;
+void freeNFA(struct NFA* nfa) { 
+    int i;
+    for(i = 0; i < nfa->currTransitionSize; i++){
+        free(nfa->delta[i]);
     }
-
-    struct edge newEdge;
-    newEdge.match = match;
-    newEdge.next = n2;
-    n1->edges[n1->currEdges] = &newEdge;
-    n1->currEdges++;
+    free(nfa->delta);
+    free(nfa->finalStates);
+    free(nfa);
 }
 
-// Creates an edge between n1's finish state and n2's initial state
-void createEndEdge(struct NFA* n1, struct NFA* n2, char match) {
-    createEdge(n1->finishState, n2, match);
-    // How to tell if finished?
-    n1->finishState = n2;
+void removeFinalState(struct NFA* nfa, int f) {
+    int i;
+    for(i = 0; i < nfa->currFinalSize; i++){
+        if(nfa->finalStates[i] == f){
+            break;
+        }
+    }
+    // Shift later enties down
+    for(; i < nfa->currFinalSize-1; i++){
+        nfa->finalStates[i] = nfa->finalStates[i+1];
+    }
+    nfa->currFinalSize--;
 }
 
-struct NFA* create(char letter) {
-    struct NFA *init = NFAalloc();
-    struct NFA *end = NFAalloc();
-    createEdge(init, end, letter);
-    return init;
+void addTransition(struct NFA* node, int a, char c, int b) {
+    if(node->currTransitionSize == node->transitionSize){
+        struct transition **newTransition = (struct transition**) calloc(node->transitionSize + 3, sizeof(struct transition*));
+        int i;
+        for(i = 0; i < node->transitionSize; i++) {
+            newTransition[i] = node->delta[i];
+        }
+        free(node->delta);
+        node->delta = newTransition;
+        node->transitionSize += 3;
+    }
+    struct transition *newT = (struct transition*) calloc(1, sizeof(struct transition));
+    newT->state = a;
+    newT->match = c;
+    newT->toState = b;
+    node->delta[node->currTransitionSize++] = newT;
 }
 
-struct NFA* or(struct NFA* n1, struct NFA*n2) {
-    struct NFA *init = NFAalloc();
-    struct NFA *end = NFAalloc();
-    createEdge(init, n1, 0);
-    createEdge(init, n2, 0);
-    createEndEdge(n1, end, 0);
-    createEndEdge(n2, end, 0);
-    return init;
+void addFinalState(struct NFA* node, int fs) {
+    if(node->currFinalSize == node-> finalSize){
+        int *newFS = (int*) calloc(node->finalSize + 3, sizeof(int));
+        int i;
+        for(i = 0; i < node->finalSize; i++) {
+            newFS[i] = node->finalStates[i];
+        }
+        free(node->finalStates);
+        node->finalStates = newFS;
+        node->finalSize += 3;
+    }
+    node->finalStates[node->currFinalSize++] = fs;
 }
 
-struct NFA* then(struct NFA* n1, struct NFA*n2) {
-    createEndEdge(n1, n2, 0);
-    return n1;
+void printNFA(struct NFA* nfa) {
+    printf("Init: %d\n", nfa->initState);
+    printf("Delta:\n");
+    int i;
+    for(i = 0; i < nfa->currTransitionSize; i++){
+        struct transition *t = nfa->delta[i];
+        if(isgraph(t->match)) {
+            printf("(%d X '%c') -> %d\n", t->state, t->match, t->toState);
+        } else {
+            printf("(%d X %d) -> %d\n", t->state, t->match, t->toState);
+        }
+    }
+    printf("Final:\n{ ");
+    for(i = 0; i < nfa->currFinalSize; i++){
+       printf("%d ", nfa->finalStates[i]);
+    }
+    printf("}\n");
 }
 
-struct NFA* kline(struct NFA* n1) {
-    struct NFA *init = NFAalloc();
-    struct NFA *end = NFAalloc();
-    createEdge(init, end, 0);
-    createEdge(init, n1, 0);
-    createEndEdge(n1, end, 0);
-    return init;
+int validate(struct NFA* nfa) {
+    return nfa->initState;
 }
+
+// matches a OR b
+struct NFA* orNFA(struct NFA* a, struct NFA* b) {
+    struct NFA *or = create();
+    int f = or->finalStates[0];
+    // copy a and b transitions into or
+    int i;
+    for(i = 0; i < a->currTransitionSize; i++){
+        struct transition *t = a->delta[i];
+        addTransition(or, t->state, t->match, t->toState);
+    }
+    for(i = 0; i < b->currTransitionSize; i++){
+        struct transition *t = b->delta[i];
+        addTransition(or, t->state, t->match, t->toState);
+    }
+    // transition from final states to f
+    for(i = 0; i < a->currFinalSize; i++){
+        addTransition(or, a->finalStates[i], 0, f);
+    }
+    for(i = 0; i < b->currFinalSize; i++){
+        addTransition(or, b->finalStates[i], 0, f);
+    }
+    
+    // transitions from initial to a and b
+    addTransition(or, or->initState, 0, a->initState);
+    addTransition(or, or->initState, 0, b->initState);
+    return or;
+}
+
+// matches a THEN b
+struct NFA* thenNFA(struct NFA* a, struct NFA* b) {
+    // copy b into a
+    int i;
+    for(i = 0; i < b->currTransitionSize; i++){
+        struct transition *t = b->delta[i];
+        addTransition(a, t->state, t->match, t->toState);
+    }
+    // transition from final of a to init of b
+    for(i = 0; i < a->currFinalSize; i++){
+        addTransition(a, a->finalStates[i], 0, b->initState);
+    } 
+    // set final states of a to those of b 
+    for(i = 0; i < a->currFinalSize; i++){
+        removeFinalState(a, a->finalStates[i]);
+    }
+    for(i = 0; i < b->currFinalSize; i++){
+        addFinalState(a, b->finalStates[i]);
+    }
+    return a;
+}
+
+// matches a*
+struct NFA* starNFA(struct NFA* a) {
+    struct NFA *star = create();
+    int f = star->finalStates[0];
+    addTransition(star, star->initState, 0, f); 
+    addTransition(star, star->initState, 0, a->initState);
+    int i;
+    // Copy a into star
+    for(i = 0; i < a->currTransitionSize; i++){
+        struct transition *t = a->delta[i];
+        addTransition(star, t->state, t->match, t->toState);
+    }
+    // final of a to init of a
+    for(i = 0; i < a->currFinalSize; i++) {
+        addTransition(star, a->finalStates[i], 0, a->initState);
+    }
+    // final of a to final of star
+    for(i = 0; i < a->currTransitionSize; i++){
+        addTransition(star, a->finalStates[i], 0, f);
+    }
+    return star;
+}
+

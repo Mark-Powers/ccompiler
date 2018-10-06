@@ -4,6 +4,7 @@
 #include "global.h"
 #include "init.h"
 #include "parser/parser.h"
+#include "util/NFA.h"
 
 int main(int argc, char **argv)
 {
@@ -45,6 +46,7 @@ int main(int argc, char **argv)
         fprintf(stderr, "Cannot write to output file!\n");
         exit(1);
     }
+
     init();
     parse();
     exit(0);

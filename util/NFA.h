@@ -1,18 +1,29 @@
-struct NFA* NFAalloc();
-struct NFA* create(char);
-void createEdge(struct NFA*, struct NFA*, char);
-void createEndEdge(struct NFA*, struct NFA*, char);
+int nextState();
 
+struct NFA* create();
+// a X c -> b
+void addTransition(struct NFA*, int a, char c, int b);
+void addFinalState(struct NFA*, int);
+void removeFinalState(struct NFA* nfa, int f);
+void printNFA(struct NFA*);
+int validate(struct NFA*);
+struct NFA* orNFA(struct NFA*, struct NFA*);
+struct NFA* thenNFA(struct NFA*, struct NFA*);
+struct NFA* starNFA(struct NFA*);
 
 struct NFA {
-    int state;
-    struct edge **edges;
-    int edgeSize;
-    int currEdges;
-    struct NFA *finishState;
+    int initState;
+    struct transition **delta;
+    int transitionSize;
+    int currTransitionSize;
+    int *finalStates;
+    int finalSize;
+    int currFinalSize;
 };
 
-struct edge {
+struct transition {
+    int state;
     char match;
-    struct NFA *next;
+    int toState;
 };
+

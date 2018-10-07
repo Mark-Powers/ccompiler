@@ -2,7 +2,7 @@ TARGET = compiler
 CC = gcc
 CFLAGS = -g -Wall -Wextra -pedantic
 
-compiler: bin/NFA.o bin/io.o bin/lexer.o bin/symbol.o bin/init.o bin/parser.o bin/emitter.o bin/error.o bin/main.o 
+compiler: bin/regex.o bin/NFA.o bin/io.o bin/lexer.o bin/symbol.o bin/init.o bin/parser.o bin/emitter.o bin/error.o bin/main.o 
 	$(CC) $(CFLAGS) -o $(TARGET) bin/*.o
 
 bin/main.o: main.c
@@ -31,6 +31,9 @@ bin/io.o: lexer/io.c
 
 
 bin/NFA.o: util/NFA.c
+	$(CC) $(CFLAGS) -c $^ -o $@
+
+bin/regex.o: util/regex.c
 	$(CC) $(CFLAGS) -c $^ -o $@
 
 clean:

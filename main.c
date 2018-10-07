@@ -5,6 +5,7 @@
 #include "init.h"
 #include "parser/parser.h"
 #include "util/NFA.h"
+#include "util/regex.h"
 
 int main(int argc, char **argv)
 {

@@ -1,2 +1,2 @@
-struct NFA* compile(char*);
-
+struct NFA* compileRE(char*);
+int next(char*);

@@ -8,6 +8,8 @@ void addTransition(struct NFA*, int a, char c, int b);
 void addFinalState(struct NFA*, int);
 void removeFinalState(struct NFA* nfa, int f);
 void printNFA(struct NFA*);
+void copyTransitions(struct NFA*, struct NFA* );
+void addTransitionsFromFinalStates(struct NFA*, struct NFA* , int);
 struct NFA* orNFA(struct NFA*, struct NFA*);
 struct NFA* thenNFA(struct NFA*, struct NFA*);
 struct NFA* starNFA(struct NFA*);

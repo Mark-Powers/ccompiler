@@ -83,27 +83,30 @@ void printNFA(struct NFA* nfa) {
     printf("}\n");
 }
 
+void copyTransitions(struct NFA* from, struct NFA* to) {
+    int i;
+    for(i = 0; i < from->currTransitionSize; i++){
+        struct transition *t = from->delta[i];
+        addTransition(to, t->state, t->match, t->toState);
+    }    
+}
+
+void addTransitionsFromFinalStates(struct NFA* to, struct NFA* f, int s) {
+    int i;
+    for(i = 0; i < size(f->finalStates); i++){
+        addTransition(to, get(f->finalStates, i), 0, s);
+    }
+}
+
 // matches a OR b
 struct NFA* orNFA(struct NFA* a, struct NFA* b) {
     struct NFA *or = create();
     int f = get(or->finalStates, 0);
-    // copy a and b transitions into or
-    int i;
-    for(i = 0; i < a->currTransitionSize; i++){
-        struct transition *t = a->delta[i];
-        addTransition(or, t->state, t->match, t->toState);
-    }
-    for(i = 0; i < b->currTransitionSize; i++){
-        struct transition *t = b->delta[i];
-        addTransition(or, t->state, t->match, t->toState);
-    }
-    // transition from final states to f
-    for(i = 0; i < size(a->finalStates); i++){
-        addTransition(or, get(a->finalStates, i), 0, f);
-    }
-    for(i = 0; i < size(b->finalStates); i++){
-        addTransition(or, get(b->finalStates, i), 0, f);
-    }
+    copyTransitions(a, or);
+    copyTransitions(b, or);
+    // transition from final states of a and b to f
+    addTransitionsFromFinalStates(or, a, f);
+    addTransitionsFromFinalStates(or, b, f);
     
     // transitions from initial to a and b
     addTransition(or, or->initState, 0, a->initState);
@@ -113,17 +116,11 @@ struct NFA* orNFA(struct NFA* a, struct NFA* b) {
 
 // matches a THEN b
 struct NFA* thenNFA(struct NFA* a, struct NFA* b) {
-    // copy b into a
-    int i;
-    for(i = 0; i < b->currTransitionSize; i++){
-        struct transition *t = b->delta[i];
-        addTransition(a, t->state, t->match, t->toState);
-    }
+    copyTransitions(b, a);
     // transition from final of a to init of b
-    for(i = 0; i < size(a->finalStates); i++){
-        addTransition(a, get(a->finalStates, i), 0, b->initState);
-    } 
+    addTransitionsFromFinalStates(a, a, b->initState);
     // set final states of a to those of b 
+    int i;
     for(i = 0; i < size(a->finalStates); i++){
         removeFinalState(a, get(a->finalStates, i));
     }
@@ -139,20 +136,12 @@ struct NFA* starNFA(struct NFA* a) {
     int f = get(star->finalStates, 0);
     addTransition(star, star->initState, 0, f); 
     addTransition(star, star->initState, 0, a->initState);
-    int i;
-    // Copy a into star
-    for(i = 0; i < a->currTransitionSize; i++){
-        struct transition *t = a->delta[i];
-        addTransition(star, t->state, t->match, t->toState);
-    }
+    
+    copyTransitions(a, star);
     // final of a to init of a
-    for(i = 0; i < size(a->finalStates); i++) {
-        addTransition(star, get(a->finalStates, i), 0, a->initState);
-    }
+    addTransitionsFromFinalStates(star, a, a->initState);
     // final of a to final of star
-    for(i = 0; i < a->currTransitionSize; i++){
-        addTransition(star, get(a->finalStates, i), 0, f);
-    }
+    addTransitionsFromFinalStates(star, a, f);
     return star;
 }
 
@@ -180,13 +169,12 @@ int move(struct NFA* n, int s, char m) {
     }
     return -1;
 }
-/*
-int* eclosure(struct NFA* n, int state) {
-    int *values = 0;
 
-    qsort(values, 5, sizeof(int), cmpfunc);
-    return values;
+
+int* eclosure(struct NFA* n, int state) {
+    return -1;
 }
+/*
 
 struct Dstate {
     int* states;

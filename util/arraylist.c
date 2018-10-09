@@ -28,6 +28,12 @@ void add(Arraylist* al, int val){
     al->size++;
 }
 
+int pop(Arraylist* al) {
+    int t = al->list[al->size-1];
+    removeI(al, al->size-1);
+    return t;
+}
+
 void insertAt(Arraylist* al, int i, int val) {
     al->list[i] = val;
 }

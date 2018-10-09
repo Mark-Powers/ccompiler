@@ -171,13 +171,39 @@ int move(struct NFA* n, int s, char m) {
 }
 
 
-int* eclosure(struct NFA* n, int state) {
-    return -1;
+Arraylist* eclosureOne(struct NFA* n, int state) {
+    Arraylist* al = createAL();
+    add(al, state);
+    return eclosureMany(n, al);
+}
+
+Arraylist* eclosureMany(struct NFA* n, Arraylist* states) {
+    int i;
+    // Create stack of all given states
+    Arraylist *stack = states;
+    //add(stack, state);
+    // Closure starts as just given state.
+    Arraylist *al = createAL();
+    add(al, state);
+    // While stack is not empty
+    while(size(stack) > 0) {
+        int t = pop(al);
+        // For each transition
+        for(i = 0; i < n->currTransitionSize; i++){
+            struct transition *transition;
+            transition = n->delta[i];
+            // if transition out of t on e that isn't already in the closure 
+            if(transition->state == t && transition->match == 0 && !contains(al, transition->toState)){
+                add(al, transition->toState);
+                add(stack, transition->toState);
+            }
+        }
+    }
+    return al;
 }
 /*
-
 struct Dstate {
-    int* states;
+    Arraylist* states;
     int stateLength
     int mark;
 };

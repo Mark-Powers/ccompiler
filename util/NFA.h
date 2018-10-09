@@ -16,7 +16,8 @@ struct NFA* starNFA(struct NFA*);
 int validate(struct NFA*, char*);
 int move(struct NFA*, int, char);
 struct NFA* toDFA(struct NFA*);
-int* eclosure(struct NFA*, int);
+Arraylist* eclosureOne(struct NFA*, int);
+Arraylist* eclosureMany(struct NFA*, Arraylist*);
 
 struct NFA {
     int initState;

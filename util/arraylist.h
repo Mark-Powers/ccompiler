@@ -1,3 +1,6 @@
+#ifndef ARRAYLIST_H
+#define ARRAYLIST_H
+
 typedef struct Arraylist {
     int *list;
     int size;
@@ -7,8 +10,11 @@ typedef struct Arraylist {
 Arraylist* createAL();
 int get(Arraylist*, int);
 void add(Arraylist*, int);
+void insertAt(Arraylist*, int, int);
 void removeI(Arraylist*, int);
 int contains(Arraylist*, int);
 void sort(Arraylist*);
 int size(Arraylist*);
+
+#endif // ARRAYLIST_H
 

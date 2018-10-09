@@ -57,7 +57,7 @@ int next(char* pattern) {
             return i+1;
         default:
             temp = create();
-            addTransition(temp, temp->initState, pattern[0], temp->finalStates[0]);
+            addTransition(temp, temp->initState, pattern[0], get(temp->finalStates, 0));
             stack[sp++] = temp;
             return 1;
     }

@@ -3,6 +3,7 @@
 #include <ctype.h>
 
 #include "NFA.h"
+#include "arraylist.h"
 
 static int state = -1;
 
@@ -13,12 +14,10 @@ int nextState() {
 struct NFA* create(){
     struct NFA *node = (struct NFA*) malloc(sizeof(struct NFA));
     node->initState = nextState();
-    node->currFinalSize = 0;
-    node->finalSize = 0;
+    node->finalStates = createAL();
     addFinalState(node, nextState());
     node->transitionSize = 0;
     node->currTransitionSize = 0;
-    // addTransition(node, node->initState, letter, node->finalStates[0]);
     return node;
 }
 
@@ -28,22 +27,17 @@ void freeNFA(struct NFA* nfa) {
         free(nfa->delta[i]);
     }
     free(nfa->delta);
-    free(nfa->finalStates);
+    // TODO free arraylist
     free(nfa);
 }
 
 void removeFinalState(struct NFA* nfa, int f) {
     int i;
-    for(i = 0; i < nfa->currFinalSize; i++){
-        if(nfa->finalStates[i] == f){
-            break;
+    for(i = 0; i < size(nfa->finalStates); i++){
+        if(get(nfa->finalStates, i) == f){
+            removeI(nfa->finalStates, i);
         }
     }
-    // Shift later enties down
-    for(; i < nfa->currFinalSize-1; i++){
-        nfa->finalStates[i] = nfa->finalStates[i+1];
-    }
-    nfa->currFinalSize--;
 }
 
 void addTransition(struct NFA* node, int a, char c, int b) {
@@ -64,18 +58,10 @@ void addTransition(struct NFA* node, int a, char c, int b) {
     node->delta[node->currTransitionSize++] = newT;
 }
 
-void addFinalState(struct NFA* node, int fs) {
-    if(node->currFinalSize == node-> finalSize){
-        int *newFS = (int*) calloc(node->finalSize + 3, sizeof(int));
-        int i;
-        for(i = 0; i < node->finalSize; i++) {
-            newFS[i] = node->finalStates[i];
-        }
-        free(node->finalStates);
-        node->finalStates = newFS;
-        node->finalSize += 3;
+void addFinalState(struct NFA* nfa, int fs) {
+    if(!contains(nfa->finalStates, fs)) {
+        add(nfa->finalStates, fs);
     }
-    node->finalStates[node->currFinalSize++] = fs;
 }
 
 void printNFA(struct NFA* nfa) {
@@ -91,20 +77,16 @@ void printNFA(struct NFA* nfa) {
         }
     }
     printf("Final:\n{ ");
-    for(i = 0; i < nfa->currFinalSize; i++){
-       printf("%d ", nfa->finalStates[i]);
+    for(i = 0; i < size(nfa->finalStates); i++){
+       printf("%d ", get(nfa->finalStates, i));
     }
     printf("}\n");
-}
-
-int validate(struct NFA* nfa) {
-    return nfa->initState;
 }
 
 // matches a OR b
 struct NFA* orNFA(struct NFA* a, struct NFA* b) {
     struct NFA *or = create();
-    int f = or->finalStates[0];
+    int f = get(or->finalStates, 0);
     // copy a and b transitions into or
     int i;
     for(i = 0; i < a->currTransitionSize; i++){
@@ -116,11 +98,11 @@ struct NFA* orNFA(struct NFA* a, struct NFA* b) {
         addTransition(or, t->state, t->match, t->toState);
     }
     // transition from final states to f
-    for(i = 0; i < a->currFinalSize; i++){
-        addTransition(or, a->finalStates[i], 0, f);
+    for(i = 0; i < size(a->finalStates); i++){
+        addTransition(or, get(a->finalStates, i), 0, f);
     }
-    for(i = 0; i < b->currFinalSize; i++){
-        addTransition(or, b->finalStates[i], 0, f);
+    for(i = 0; i < size(b->finalStates); i++){
+        addTransition(or, get(b->finalStates, i), 0, f);
     }
     
     // transitions from initial to a and b
@@ -138,15 +120,15 @@ struct NFA* thenNFA(struct NFA* a, struct NFA* b) {
         addTransition(a, t->state, t->match, t->toState);
     }
     // transition from final of a to init of b
-    for(i = 0; i < a->currFinalSize; i++){
-        addTransition(a, a->finalStates[i], 0, b->initState);
+    for(i = 0; i < size(a->finalStates); i++){
+        addTransition(a, get(a->finalStates, i), 0, b->initState);
     } 
     // set final states of a to those of b 
-    for(i = 0; i < a->currFinalSize; i++){
-        removeFinalState(a, a->finalStates[i]);
+    for(i = 0; i < size(a->finalStates); i++){
+        removeFinalState(a, get(a->finalStates, i));
     }
-    for(i = 0; i < b->currFinalSize; i++){
-        addFinalState(a, b->finalStates[i]);
+    for(i = 0; i < size(b->finalStates); i++){
+        addFinalState(a, get(b->finalStates, i));
     }
     return a;
 }
@@ -154,7 +136,7 @@ struct NFA* thenNFA(struct NFA* a, struct NFA* b) {
 // matches a*
 struct NFA* starNFA(struct NFA* a) {
     struct NFA *star = create();
-    int f = star->finalStates[0];
+    int f = get(star->finalStates, 0);
     addTransition(star, star->initState, 0, f); 
     addTransition(star, star->initState, 0, a->initState);
     int i;
@@ -164,13 +146,97 @@ struct NFA* starNFA(struct NFA* a) {
         addTransition(star, t->state, t->match, t->toState);
     }
     // final of a to init of a
-    for(i = 0; i < a->currFinalSize; i++) {
-        addTransition(star, a->finalStates[i], 0, a->initState);
+    for(i = 0; i < size(a->finalStates); i++) {
+        addTransition(star, get(a->finalStates, i), 0, a->initState);
     }
     // final of a to final of star
     for(i = 0; i < a->currTransitionSize; i++){
-        addTransition(star, a->finalStates[i], 0, f);
+        addTransition(star, get(a->finalStates, i), 0, f);
     }
     return star;
 }
 
+int validate(struct NFA *n, char* string) {
+    int state = n->initState;
+    int i = 0;
+    while(string[i] != '\0') {
+        state = move(n, state, string[i]);
+        if(state == -1){ 
+            return 0;
+        }
+        i++;
+    }
+    return contains(n->finalStates, state);
+}
+
+int move(struct NFA* n, int s, char m) {
+    int i;
+    struct transition *t;
+    for(i = 0; i < n->currTransitionSize; i++){
+        t = n->delta[i];
+        if(t->state == s && t->match == m){
+            return t->toState;
+        }
+    }
+    return -1;
+}
+/*
+int* eclosure(struct NFA* n, int state) {
+    int *values = 0;
+
+    qsort(values, 5, sizeof(int), cmpfunc);
+    return values;
+}
+
+struct Dstate {
+    int* states;
+    int stateLength
+    int mark;
+};
+
+static struct Dstate* getUnmarked(struct Dstate** dstates, int n) {
+    int i;
+    for(i = 0; i < n; i++) {
+        if(dstates[i]->mark){
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static int contains(int[] a, int n, int s){
+    int i;
+    for(i = 0; i < n; i++){
+        if(a[i] == s){
+            return 1;
+        }
+    }
+    return 0;
+}
+
+struct NFA* toDFA(struct NFA* n) {
+    struct Dstate** dstates = (struct Dstate**) calloc(10, sizeof(struct Dstate*));
+    int dstatesLength = 0;
+   
+    // While there is an unmarked T
+    while(getUnmarked(dstates, dstatesLength)){
+        struct Dstate* t = getUnmarked(dstates, dstatesLength);
+        // For each input symbol a off of a state in T
+        int i;
+        for(i = 0; i < n->currTransitionSize; i++){
+            if(contains(t->states, t->stateLength, n->delta[i]->state)) {
+                eclosure(move(T, t->match));
+                
+                // U := eclosure(move(T, a));
+                // if U is not in Dstates then
+                // add U as an unmarked state to Dstates:
+                // Dtran(T, a) ;= U
+
+            }
+        }
+
+    }
+
+    return n;
+}
+*/

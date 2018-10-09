@@ -1,5 +1,5 @@
 TARGET = compiler
-CC = gcc
+CC = gcc -std=c11
 CFLAGS = -g -Wall -Wextra -pedantic
 
 compiler: bin/arraylist.o bin/regex.o bin/NFA.o bin/io.o bin/lexer.o bin/symbol.o bin/init.o bin/parser.o bin/emitter.o bin/error.o bin/main.o 

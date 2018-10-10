@@ -65,18 +65,18 @@ void addFinalState(struct NFA* nfa, int fs) {
 }
 
 void printNFA(struct NFA* nfa) {
-    printf("Init: %d\n", nfa->initState);
+    printf("Init:\t%d\n", nfa->initState);
     printf("Delta:\n");
     int i;
     for(i = 0; i < nfa->currTransitionSize; i++){
         struct transition *t = nfa->delta[i];
         if(isgraph(t->match)) {
-            printf("(%d X '%c') -> %d\n", t->state, t->match, t->toState);
+            printf("\t(%d X '%c') -> %d\n", t->state, t->match, t->toState);
         } else {
-            printf("(%d X %d) -> %d\n", t->state, t->match, t->toState);
+            printf("\t(%d X %d) -> %d\n", t->state, t->match, t->toState);
         }
     }
-    printf("Final:\n{ ");
+    printf("Final:\n\t{ ");
     for(i = 0; i < size(nfa->finalStates); i++){
        printf("%d ", get(nfa->finalStates, i));
     }
@@ -180,15 +180,18 @@ Arraylist* eclosureOne(struct NFA* n, int state) {
 Arraylist* eclosureMany(struct NFA* n, Arraylist* states) {
     int i;
     // Create stack of all given states
-    Arraylist *stack = states;
-    //add(stack, state);
-    // Closure starts as just given state.
- 
+    Arraylist *stack = createAL();
+    for(i = 0 ; i < size(states); i++){
+        add(stack, get(states, i));
+    }
+    // Closure starts as just given states.
     Arraylist *al = createAL();
-    add(al, state);
+    for(i = 0 ; i < size(states); i++){
+        add(al, get(states, i));
+    }
     // While stack is not empty
     while(size(stack) > 0) {
-        int t = pop(al);
+        int t = pop(stack);
         // For each transition
         for(i = 0; i < n->currTransitionSize; i++){
             struct transition *transition;
@@ -196,6 +199,7 @@ Arraylist* eclosureMany(struct NFA* n, Arraylist* states) {
             // if transition out of t on e that isn't already in the closure 
             if(transition->state == t && transition->match == 0 && !contains(al, transition->toState)){
                 add(al, transition->toState);
+                // This is an issue
                 add(stack, transition->toState);
             }
         }
@@ -252,6 +256,24 @@ static struct Dtran** addDtran(struct Dtran** dtrans, int* n, int* max, Arraylis
     return dtrans;
 }
 
+struct Dstate** dstateTranslations;
+static int getTranslatedState(Arraylist* ds){
+    // dstate is list, mark is new state
+    static int dstatesLength2 = 0;
+    static int dstatesMax2 = 0;
+    // If state is already known, return its new state value (mark)
+    int i;
+    for(i = 0; i < dstatesLength2; i++){
+        if(equalAL(dstateTranslations[i]->states, ds)){
+            return dstateTranslations[i]->mark;
+        }
+    }
+    // Otherwise add it and use the new mark 
+    int t = nextState();
+    dstateTranslations = addDstate(dstateTranslations, &dstatesLength2, &dstatesMax2, ds, t);
+    return t; 
+}
+
 static struct Dstate* getUnmarked(struct Dstate** dstates, int n) {
     int i;
     for(i = 0; i < n; i++) {
@@ -305,12 +327,12 @@ struct NFA* toDFA(struct NFA* n) {
         // For each input symbol a from a state in t
         int i;
         for(i = 0; i < n->currTransitionSize; i++){
-            if(contains(t->states, n->delta[i]->state)) {
-                char a = n->delta[i]->match;
+            char a = n->delta[i]->match;
+            if(a != 0 && contains(t->states, n->delta[i]->state)) {
                 Arraylist* u = eclosureMany(n, getMoves(n, t->states, a));
                 sort(u);
                 // if U is not in Dstates then
-                if(containsDstate(dstates, dstatesLength, u)) {
+                if(!containsDstate(dstates, dstatesLength, u)) {
                     // add U as an unmarked state to Dstates:
                     dstates = addDstate(dstates, &dstatesLength, &dstatesMax, u, 0);
                 }
@@ -319,26 +341,30 @@ struct NFA* toDFA(struct NFA* n) {
 
             }
         }
-
     }
-
-
+   
+    struct NFA* dfa = create();
+    int firstState = getTranslatedState(eclosureOne(n, n->initState)); 
+    // Clear final and ending state;
+    dfa->initState = firstState;
+    removeFinalState(dfa, get(dfa->finalStates, 0));
     // PARSE dtrans
-    int i;
-    printf("DTRAN:");
+    int i,j;
     for(i = 0 ; i < dtransLength; i++){
         struct Dtran *d = dtrans[i];
-        int j;
-        for(j = 0; j < d->t->size; j++) {
-            printf("%d", d->t->list[j]);
-        }
-        printf("| %c | ", d->a);
-        for(j = 0; j < d->u->size; j++) {
-            printf("%d", d->u->list[j]);
-        }
-        printf("\n");
-    }
 
-    return n;
+        int state = getTranslatedState(d->t);
+        int toState = getTranslatedState(d->u);
+        addTransition(dfa, state, d->a, toState);
+
+        for(j = 0; j < size(n->finalStates); j++){
+            int f = get(n->finalStates, j);
+            if(contains(d->u, f)){
+                addFinalState(dfa, toState);
+                //f = toState;
+            }
+        } 
+    }
+    return dfa;
 }
 

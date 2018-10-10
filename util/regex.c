@@ -26,12 +26,12 @@ struct NFA* compileRE(char* pattern) {
         i+=next(pattern+i);
     }
     struct NFA* temp;
-    for(i = 1; i < sp; i++){
+    while(sp > 1) {
         temp = stack[--sp];
         temp = thenNFA(stack[--sp], temp);
         stack[sp++] = temp;
     }
-    return NULL;
+    return stack[--sp];
 }
 
 int next(char* pattern) {

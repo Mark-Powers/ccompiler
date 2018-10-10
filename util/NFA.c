@@ -183,6 +183,7 @@ Arraylist* eclosureMany(struct NFA* n, Arraylist* states) {
     Arraylist *stack = states;
     //add(stack, state);
     // Closure starts as just given state.
+ 
     Arraylist *al = createAL();
     add(al, state);
     // While stack is not empty
@@ -199,58 +200,145 @@ Arraylist* eclosureMany(struct NFA* n, Arraylist* states) {
             }
         }
     }
+    sort(al);
     return al;
 }
-/*
+
 struct Dstate {
     Arraylist* states;
-    int stateLength
     int mark;
 };
+
+struct Dtran {
+    Arraylist* t;
+    char a;
+    Arraylist* u;
+};
+
+static struct Dstate** addDstate(struct Dstate** dstates, int* n, int* max, Arraylist* al, int mark) {
+    struct Dstate* newDstate = (struct Dstate*) calloc(1, sizeof(struct Dstate));
+    newDstate->states = al;
+    newDstate->mark = mark;
+    if(*n == *max){
+        struct Dstate** newDstates = (struct Dstate**) calloc((*max)*2, sizeof(struct Dstate*));
+        int i;
+        for(i = 0; i < *n; i++){
+            newDstates[i] = dstates[i];
+        }
+        // TODO free dstates
+        dstates = newDstates;
+        (*max) *= 2;
+    }
+    dstates[(*n)++] = newDstate;
+    return dstates;
+}
+
+static struct Dtran** addDtran(struct Dtran** dtrans, int* n, int* max, Arraylist* t, char a, Arraylist* u) {
+    struct Dtran* newDtran = (struct Dtran*) calloc(1, sizeof(struct Dtran));
+    newDtran->t = t;
+    newDtran->a = a;
+    newDtran->u = u;
+    if(*n == *max){
+        struct Dtran** newDtrans = (struct Dtran**) calloc((*max)*2, sizeof(struct Dtran*));
+        int i;
+        for(i = 0; i < *n; i++){
+            newDtrans[i] = dtrans[i];
+        }
+        // TODO free dtrans
+        dtrans = newDtrans;
+        (*max) *= 2;
+    }
+    dtrans[(*n)++] = newDtran;
+    return dtrans;
+}
 
 static struct Dstate* getUnmarked(struct Dstate** dstates, int n) {
     int i;
     for(i = 0; i < n; i++) {
-        if(dstates[i]->mark){
+        // Return the first unmarked state
+        if(!dstates[i]->mark){
+            return dstates[i];
+        }
+    }
+    // No unmarked state
+    return NULL;
+}
+
+static int containsDstate(struct Dstate** dstates, int n, Arraylist* al){
+    int i;
+    for(i = 0; i < n; i++) {
+        if(equalAL(dstates[i]->states, al)) {
             return 1;
         }
     }
     return 0;
 }
 
-static int contains(int[] a, int n, int s){
+Arraylist* getMoves(struct NFA* nfa, Arraylist* states, char a) {
+    Arraylist* al = createAL();
     int i;
-    for(i = 0; i < n; i++){
-        if(a[i] == s){
-            return 1;
+    for(i = 0; i < nfa->currTransitionSize; i++){
+        struct transition* t = nfa->delta[i];
+        if(contains(states, t->state) && t->match == a) {
+            add(al, t->toState);
         }
     }
-    return 0;
+    return al;
 }
 
 struct NFA* toDFA(struct NFA* n) {
+    struct Dtran** dtrans = (struct Dtran**) calloc(10, sizeof(struct Dtran*));
+    int dtransLength = 0;
+    int dtransMax = 0;
+
+    // Initially dstates only has eclosure of the initial state
     struct Dstate** dstates = (struct Dstate**) calloc(10, sizeof(struct Dstate*));
     int dstatesLength = 0;
+    int dstatesMax = 0;
+    dstates = addDstate(dstates, &dstatesLength, &dstatesMax, eclosureOne(n, n->initState), 0);
    
-    // While there is an unmarked T
+    // While there is an unmarked state t
     while(getUnmarked(dstates, dstatesLength)){
         struct Dstate* t = getUnmarked(dstates, dstatesLength);
-        // For each input symbol a off of a state in T
+        // Mark t
+        t->mark = 1;
+        // For each input symbol a from a state in t
         int i;
         for(i = 0; i < n->currTransitionSize; i++){
-            if(contains(t->states, t->stateLength, n->delta[i]->state)) {
-                eclosure(move(T, t->match));
-                
-                // U := eclosure(move(T, a));
+            if(contains(t->states, n->delta[i]->state)) {
+                char a = n->delta[i]->match;
+                Arraylist* u = eclosureMany(n, getMoves(n, t->states, a));
+                sort(u);
                 // if U is not in Dstates then
-                // add U as an unmarked state to Dstates:
+                if(containsDstate(dstates, dstatesLength, u)) {
+                    // add U as an unmarked state to Dstates:
+                    dstates = addDstate(dstates, &dstatesLength, &dstatesMax, u, 0);
+                }
                 // Dtran(T, a) ;= U
+                dtrans = addDtran(dtrans, &dtransLength, &dtransMax, t->states, a, u);
 
             }
         }
 
     }
 
+
+    // PARSE dtrans
+    int i;
+    printf("DTRAN:");
+    for(i = 0 ; i < dtransLength; i++){
+        struct Dtran *d = dtrans[i];
+        int j;
+        for(j = 0; j < d->t->size; j++) {
+            printf("%d", d->t->list[j]);
+        }
+        printf("| %c | ", d->a);
+        for(j = 0; j < d->u->size; j++) {
+            printf("%d", d->u->list[j]);
+        }
+        printf("\n");
+    }
+
     return n;
 }
-*/
+

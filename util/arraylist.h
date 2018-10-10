@@ -16,6 +16,7 @@ void removeI(Arraylist*, int);
 int contains(Arraylist*, int);
 void sort(Arraylist*);
 int size(Arraylist*);
+int equalAL(Arraylist*, Arraylist*);
 
 #endif // ARRAYLIST_H
 

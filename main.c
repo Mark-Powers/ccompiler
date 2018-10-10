@@ -48,6 +48,13 @@ int main(int argc, char **argv)
         exit(1);
     }
 
+    printf("compiling 'abc'\n");
+    struct NFA* n = compileRE("abc");
+    printf("printing NFA\n");
+    printNFA(n);
+    printf("toDFA\n");
+    toDFA(n);
+
     init();
     parse();
     exit(0);

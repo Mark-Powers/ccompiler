@@ -67,3 +67,17 @@ void sort(Arraylist* al) {
 int size(Arraylist* al) {
     return al->size;
 }
+
+int equalAL(Arraylist *al1, Arraylist *al2) {
+    int i;
+    if(al1->size != al2->size){
+        return 0;
+    }
+    for(i = 0; i < al1->size; i++){
+        if(al1->list[i] != al2->list[i]){
+            return 0;
+        }
+    }
+    return 1;
+}
+

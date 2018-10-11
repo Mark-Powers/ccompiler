@@ -3,6 +3,7 @@
 #include <ctype.h>
 
 #include "NFA.h"
+#include "regex.h"
 #include "arraylist.h"
 
 static int state = -1;
@@ -163,8 +164,13 @@ int move(struct NFA* n, int s, char m) {
     struct transition *t;
     for(i = 0; i < n->currTransitionSize; i++){
         t = n->delta[i];
-        if(t->state == s && t->match == m){
-            return t->toState;
+        if(t->state == s) {
+            if(t->match == m ||
+                (t->match == ANY_ALPHANUM && isalnum(m)) ||
+                (t->match == ANY_ALPHA && isalpha(m)) ||
+                (t->match == ANY_NUM && isdigit(m))){
+                return t->toState;
+            }
         }
     }
     return -1;

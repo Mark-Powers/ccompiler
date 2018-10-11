@@ -48,10 +48,14 @@ int main(int argc, char **argv)
         exit(1);
     }
 
-    struct NFA* n = compileRE("(a|b)abb");
-    printNFA(n);
+    struct NFA* n = compileRE("\\a\\w*");
+    //printNFA(n);
     struct NFA* d = toDFA(n);
-    printNFA(d);
+    //printNFA(d);
+    printf("%d\n", validate(d, "abc"));
+    printf("%d\n", validate(d, "abd2"));
+    printf("%d\n", validate(d, "2bde"));
+    printf("%d\n", validate(d, "abdef"));
 
     init();
     parse();

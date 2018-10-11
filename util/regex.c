@@ -12,9 +12,6 @@
 #define LPAREN 4
 #define RPAREN 5
 
-#define ALPHA -10
-#define NUM   -11
-
 static struct NFA **stack;
 static unsigned int sp;
 
@@ -55,6 +52,29 @@ int next(char* pattern) {
             sp-=2;
             stack[sp++] = temp;
             return i+1;
+        case 92: // '\' character
+            switch(pattern[1]){
+                case 'a': // equiv [A-z]
+                    temp = create();
+                    addTransition(temp, temp->initState, ANY_ALPHA, get(temp->finalStates, 0));
+                    stack[sp++] = temp;
+                    return 2;
+                case 'w':
+                    temp = create();
+                    addTransition(temp, temp->initState, ANY_ALPHANUM, get(temp->finalStates, 0));
+                    stack[sp++] = temp;
+                    return 2;
+                case 'd':
+                    temp = create();
+                    addTransition(temp, temp->initState, ANY_NUM, get(temp->finalStates, 0));
+                    stack[sp++] = temp;
+                    return 2;
+                default:
+                    temp = create();
+                    addTransition(temp, temp->initState, pattern[1], get(temp->finalStates, 0));
+                    stack[sp++] = temp;
+                    return 2;
+            }
         default:
             temp = create();
             addTransition(temp, temp->initState, pattern[0], get(temp->finalStates, 0));
